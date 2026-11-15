@@ -374,7 +374,8 @@ footer a{color:var(--teal)}
   .moonstrip{display:block;overflow:hidden}
   .moonstrip.off{display:none}
   .moonstrip img{width:100%;height:100%;object-fit:cover;filter:sepia(.5) saturate(.9) brightness(.92) contrast(1.05)}
-  .tagline{text-align:left;color:#3a2f22;transform:rotate(-1.6deg);white-space:nowrap;overflow:hidden;margin:0;line-height:1}
+  .tagline{display:flex;align-items:flex-end;padding:0 0 calc(3 * var(--u)) calc(10 * var(--u));text-align:left;color:#2f261b;
+    font-size:calc(16 * var(--u));transform:rotate(-6.2deg);white-space:nowrap;overflow:hidden;margin:0;line-height:1}
   #cTag2{margin:0}
   .row{margin:0;background:none;border:0;border-radius:0}
   .rin{position:absolute;inset:0;padding:0}
@@ -492,8 +493,8 @@ footer a{color:var(--teal)}
         <figcaption id="cCredit"></figcaption>
       </figure>
       <div class="clip at" style="--x:330;--y:170;--w:62;--h:100" aria-hidden="true"><img src="assets/paperclip.png" alt=""></div>
-      <p class="tagline at" id="cTag1" style="--x:116;--y:727;--w:282;--h:22"></p>
-      <p class="tagline at" id="cTag2" style="--x:118;--y:765;--w:282;--h:22"></p>
+      <p class="tagline at" id="cTag1" style="--x:110;--y:748;--w:272;--h:26"></p>
+      <p class="tagline at" id="cTag2" style="--x:112;--y:785;--w:272;--h:26"></p>
       <div class="row at" id="r1" style="--x:812;--y:244;--w:784;--h:158"></div>
       <div class="row at" id="r2" style="--x:812;--y:407;--w:784;--h:148"></div>
       <div class="row at" id="r3" style="--x:812;--y:560;--w:784;--h:168"></div>
@@ -660,11 +661,11 @@ const ART = {
 };
 /* label: replaces the painted "MARS ROVER MISSION" note (null keeps the painting). */
 const FILE = {
-  spirit:      {moon:false, label:null, tag:["MER-A · launched Jun 10, 2003","Last signal: Mar 22, 2010"]},
-  opportunity: {moon:false, label:null, tag:["MER-B · launched Jul 7, 2003","Last signal: Jun 10, 2018"]},
-  ingenuity:   {moon:false, label:["Mars","Helicopter","Mission"], tag:["Mars 2020 · launched Jul 30, 2020","Last flight: Jan 18, 2024"]},
-  lander:      {moon:true,  label:["Apollo 11","Lunar","Module"], tag:["Apollo 11 · launched Jul 16, 1969","Moon liftoff: Jul 21, 1969"]},
-  reflector:   {moon:true,  label:["Apollo 11","Mirror","Panel"],  tag:["Apollo 11 · placed Jul 21, 1969","Status: unknown"], solvedTag:"Status: still working!"}
+  spirit:      {moon:false, label:null, tag:["Launch: Jun 10, 2003","Last signal: Mar 22, 2010"]},
+  opportunity: {moon:false, label:null, tag:["Launch: Jul 7, 2003","Last signal: Jun 10, 2018"]},
+  ingenuity:   {moon:false, label:["Mars","Helicopter","Mission"], tag:["Launch: Jul 30, 2020","Last flight: Jan 18, 2024"]},
+  lander:      {moon:true,  label:["Apollo 11","Lunar","Module"], tag:["Launch: Jul 16, 1969","Moon liftoff: Jul 21, 1969"]},
+  reflector:   {moon:true,  label:["Apollo 11","Mirror","Panel"],  tag:["Placed: Jul 21, 1969","Status: unknown"], solvedTag:"Status: still working!"}
 };
 /* Where each case photo sits on the painted case board (artwork pixels). */
 const LAYOUT = {
