@@ -50,7 +50,7 @@ img{max-width:100%}
 
 /* Phone / tablet (default): the art is a backdrop and content stacks. */
 .stage{
-  position:relative;min-height:100vh;padding:78px 16px 40px;
+  position:relative;min-height:100vh;padding:78px 16px 40px;overflow-x:clip;
   background:var(--bg) center/cover no-repeat, var(--night);
 }
 .stage::before{content:"";position:absolute;inset:0;pointer-events:none;
@@ -102,7 +102,7 @@ img{max-width:100%}
 .kicker{font-family:"Space Mono",monospace;color:var(--teal);text-transform:uppercase;
   font-size:calc(17 * var(--u));letter-spacing:.32em;display:flex;align-items:center;gap:1em;justify-content:center}
 .kicker.lines::before,.kicker.lines::after{content:"";height:1px;width:calc(70 * var(--u));background:currentColor;opacity:.7}
-#title h1{font-size:clamp(46px,13vw,calc(96 * var(--u)));line-height:.95;margin:.22em 0 .12em;color:var(--cream);text-transform:uppercase;
+#title h1{font-size:clamp(46px,13vw,calc(96 * var(--u)));line-height:1.12;margin:.22em 0 .12em;color:var(--cream);text-transform:uppercase;
   text-shadow:0 4px 0 rgba(0,0,0,.35),0 0 30px rgba(0,0,0,.5)}
 #title h1 .red{color:var(--red)}
 #title .tag{font-family:"Space Mono",monospace;color:var(--amber);font-size:calc(25 * var(--u));margin:0 0 1.2em;font-weight:700}
@@ -156,15 +156,31 @@ img{max-width:100%}
 .cap{display:block;position:relative;margin:-14px 6px 0;padding:6px 10px 8px;color:var(--ink);
   background:linear-gradient(175deg,#f4e4c3,#dcc394);box-shadow:0 6px 12px rgba(0,0,0,.45);z-index:2;
   clip-path:polygon(0 3px,4% 0,30% 2px,58% 0,86% 3px,100% 0,100% 100%,0 100%)}
-.cap .ctab{display:block;font-family:"Space Mono",monospace;font-weight:700;font-size:calc(12 * var(--u));letter-spacing:.15em;color:var(--stamp)}
-.cap .cname{display:block;font-family:"Montserrat",sans-serif;font-style:italic;font-weight:900;font-size:calc(19 * var(--u));line-height:1.08;color:#1d1810}
-.cap .cwhere{display:block;font-family:"Space Mono",monospace;font-size:calc(12 * var(--u));color:var(--ink-soft)}
+.cap .ctab{display:block;font-family:"Space Mono",monospace;font-weight:700;font-size:calc(12 * var(--u));letter-spacing:.15em;color:var(--stamp);line-height:1.5}
+.cap .cname{display:block;font-family:"Montserrat",sans-serif;font-style:italic;font-weight:900;font-size:calc(19 * var(--u));line-height:1.25;color:#1d1810}
+.cap .cwhere{display:block;font-family:"Space Mono",monospace;font-size:calc(12 * var(--u));color:var(--ink-soft);line-height:1.5}
 .bcard:hover,.bcard:focus-visible{transform:rotate(0deg) translateY(-3px)}
 .bcard:focus-visible{outline:none}
 .bcard:hover .win,.bcard:focus-visible .win{filter:drop-shadow(0 0 10px rgba(242,184,75,.85))}
 .sticky{position:absolute;font-family:"Special Elite",monospace;color:#3b3322;font-size:calc(14 * var(--u));padding:5px 8px;
   box-shadow:0 4px 6px rgba(0,0,0,.35);z-index:4;line-height:1.15;right:-6px;top:-8px;transform:rotate(7deg)}
 .sticky.b{background:#9fd8e8}.sticky.p{background:#f4b6c2}
+/* Demo version */
+.demo-badge{display:none;font-family:"Space Mono",monospace;font-weight:700;font-size:calc(14 * var(--u));letter-spacing:.3em;text-transform:uppercase;
+  color:#0b1a1c;background:var(--teal);padding:.25em .9em;border-radius:2px;margin-bottom:.8em;box-shadow:0 0 16px rgba(95,211,196,.45)}
+.is-demo .demo-badge{display:inline-block}
+.demo-only{display:none}
+.is-demo .demo-only{display:block}
+.is-demo .full-only{display:none}
+.is-demo .title-block{transform:translateY(calc(-22 * var(--u)))}
+.bcard.locked{cursor:not-allowed}
+.bcard.locked img.ph{filter:grayscale(1) brightness(.45) blur(1px)}
+.bcard .lock{display:none;position:absolute;left:50%;top:40%;width:72%;transform:translate(-50%,-50%) rotate(-4deg);z-index:3;pointer-events:none;
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,.6))}
+.bcard.locked .lock{display:block}
+.bcard.locked .cap{filter:saturate(.4) brightness(.8)}
+.bcard.locked:hover,.bcard.locked:focus-visible{transform:rotate(calc(var(--r) * .5))}
+.memo .count.flash{animation:blink .5s 3}
 
 /* ---------- CASE FILE ---------- */
 .case-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
@@ -174,7 +190,7 @@ img{max-width:100%}
   clip-path:polygon(0 0,86% 0,100% 50%,86% 100%,0 100%);display:flex;align-items:center;justify-content:center}
 .step.on{color:#1b1309;background:linear-gradient(180deg,#ffc867,#e08a3a);font-weight:700}
 .field{font-family:"Space Mono",monospace;color:var(--teal);font-size:calc(16 * var(--u));letter-spacing:.14em;text-transform:uppercase;display:flex;align-items:center}
-.ctitle{font-size:calc(38 * var(--u));line-height:1.02;margin:.15em 0 .3em;text-transform:uppercase;color:var(--cream);display:flex;align-items:center;
+.ctitle{font-size:calc(38 * var(--u));line-height:1.15;margin:.15em 0 .3em;text-transform:uppercase;color:var(--cream);display:flex;align-items:center;
   text-shadow:0 3px 0 rgba(0,0,0,.4)}
 .status{display:flex;align-items:center;justify-content:center;margin:0 0 14px}
 .status .plate{display:flex;align-items:center;gap:.6em;font-family:"Special Elite",monospace;font-size:calc(22 * var(--u));letter-spacing:.06em;
@@ -219,7 +235,7 @@ button.rin.open{cursor:default}
 .flabel{font-family:"Montserrat",sans-serif;font-style:italic;font-weight:900;color:var(--cream);font-size:calc(21 * var(--u));text-transform:uppercase;
   display:flex;align-items:center;gap:.5em}
 .flabel::before{content:"";width:30px;height:34px;background:url("assets/icon-bulb.png") center/contain no-repeat}
-.fbody{display:block;font-size:calc(18 * var(--u));line-height:1.36;margin-top:6px}
+.fbody{display:flow-root;font-size:calc(18 * var(--u));line-height:1.36;margin-top:6px}
 .fbody .sp{display:none}
 .fbody p{margin:0}
 .fbody .act{float:right;margin:0 0 4px 12px;display:block}
@@ -309,7 +325,7 @@ footer a{color:var(--teal)}
 
   /* Title */
   .title-block{padding:0;justify-content:flex-start}
-  .title-block h1{font-size:calc(96 * var(--u))!important}
+  .title-block h1{font-size:calc(96 * var(--u))!important;line-height:1!important}
   .start{width:calc(400 * var(--u))}
   .footbar{margin:0;justify-content:space-between;flex-wrap:nowrap;padding:0 calc(16 * var(--u))}
   .footbar .rule{min-width:0}
@@ -329,6 +345,8 @@ footer a{color:var(--teal)}
   .bcard .win::after{display:none}
   .bcard .win img.ph{left:0;top:0;width:100%;height:100%;box-shadow:inset 0 0 20px rgba(0,0,0,.6)}
   .bcard:hover .win,.bcard:focus-visible .win{filter:none;box-shadow:0 0 0 calc(3 * var(--u)) var(--amber),0 0 calc(26 * var(--u)) calc(6 * var(--u)) rgba(242,184,75,.65)}
+  .bcard.locked:hover,.bcard.locked:focus-visible{transform:rotate(var(--r))}
+  .bcard.locked:hover .win,.bcard.locked:focus-visible .win{box-shadow:0 0 0 calc(3 * var(--u)) rgba(255,90,78,.6)}
   .bcard .cap{position:absolute;left:-2%;right:-2%;top:93%;margin:0;padding:calc(5 * var(--u)) calc(10 * var(--u)) calc(7 * var(--u))}
   .bcard:hover .cap,.bcard:focus-visible .cap{transform:translateY(calc(-2 * var(--u)))}
   .sticky{right:calc(-14 * var(--u));top:calc(-16 * var(--u))}
@@ -344,7 +362,7 @@ footer a{color:var(--teal)}
   .step:nth-child(3){left:calc(665 * 100% / 1672)}
   .step.on{background:linear-gradient(180deg,rgba(255,200,103,.92),rgba(224,138,58,.92))}
   .field{padding-left:calc(6 * var(--u))}
-  .ctitle{margin:0;font-size:calc(41 * var(--u))}
+  .ctitle{margin:0;font-size:calc(39 * var(--u));line-height:1}
   .status{margin:0;transform:rotate(-7deg)}
   .status .plate{width:100%;height:100%;justify-content:center;padding:0}
   .status.closed .plate{display:flex;animation:peel .55s ease-in forwards}
@@ -367,9 +385,9 @@ footer a{color:var(--teal)}
     box-shadow:inset 0 0 0 calc(2 * var(--u)) rgba(70,58,44,.75)}
   .strip::before{content:"";position:absolute;inset:0;background:rgba(214,186,130,.35);mix-blend-mode:multiply;pointer-events:none}
   .strip.off{display:none}
-  .strip span{position:relative;font-family:"Oswald",sans-serif;font-weight:600;text-transform:uppercase;color:#3c3934;line-height:1;
-    font-size:calc(31 * var(--u));letter-spacing:.01em;opacity:.9}
-  .strip span.sm{font-size:calc(25 * var(--u))}
+  .strip span{position:relative;font-family:"Oswald",sans-serif;font-weight:600;text-transform:uppercase;color:#3c3934;line-height:1.5;
+    font-size:calc(26 * var(--u));letter-spacing:.01em;opacity:.9}
+  .strip span.sm{font-size:calc(22 * var(--u))}
   .strip i{position:relative;color:#b8332a;font-style:italic;font-weight:900;font-family:"Montserrat";font-size:calc(18 * var(--u));margin-top:calc(6 * var(--u));letter-spacing:-.05em}
   .moonstrip{display:block;overflow:hidden}
   .moonstrip.off{display:none}
@@ -400,10 +418,14 @@ footer a{color:var(--teal)}
   .fbody .sp{display:block;float:left;width:var(--lw,calc(176 * var(--u)));height:calc(32 * var(--u))}
   .fbody .act{margin-top:calc(14 * var(--u))}
   .fbody.below .act{margin-top:calc(4 * var(--u))}
-  .fbody.below p{clear:left;padding-top:calc(4 * var(--u))}
+  .fbody.below p{padding-top:calc(4 * var(--u))}
   .back-row{margin:0;justify-content:flex-end;align-items:center}
   .back-row .btn{padding:0 1em;height:100%}
-  .rb.items-wrap{top:calc(72 * var(--u));overflow:visible}
+  .rb.items-wrap{top:calc(68 * var(--u));overflow:visible}
+  .rb.items-wrap .item{line-height:1.28;font-size:calc(13 * var(--u));padding:calc(2 * var(--u)) calc(9 * var(--u))}
+  .rb.items-wrap .item .nm{font-size:calc(13.5 * var(--u))}
+  .rb.items-wrap .item .kg{font-size:calc(12 * var(--u))}
+  .rb.items-wrap .item .kg{display:block}
   .rb.items-wrap .sp{display:none}
   .items{grid-template-columns:repeat(4,1fr);gap:calc(7 * var(--u))}
   .item{padding:calc(4 * var(--u)) calc(9 * var(--u));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -428,7 +450,8 @@ footer a{color:var(--teal)}
   <!-- TITLE -->
   <section class="screen active" id="title">
     <div class="stage">
-      <div class="title-block at" style="--x:440;--y:116;--w:850;--h:460">
+      <div class="title-block at" style="--x:440;--y:116;--w:850;--h:490">
+        <div class="demo-badge">Demo version</div>
         <div class="kicker lines">Case files from the Moon and Mars</div>
         <h1 class="display"><span>Space</span> <span class="red">Sleuths</span></h1>
         <p class="tag">Some machines went silent. Some never came home.</p>
@@ -452,7 +475,8 @@ footer a{color:var(--teal)}
           <p>Since the 1960s, NASA has sent machines to explore the Moon and Mars. Many of them are still out there today.</p>
           <p>Some went silent. Some were left behind on purpose. And one of them might surprise you.</p>
           <p><span class="mission">Your mission:</span> open each case file, inspect every clue, and make your best guess about what happened. Then uncover the real story and the science each machine made possible.</p>
-          <p>Good luck, Space Sleuth.</p>
+          <p class="demo-only"><span class="mission">Demo:</span> 2 of the 5 case files are open. Good luck, Space Sleuth.</p>
+          <p class="full-only">Good luck, Space Sleuth.</p>
           <button class="sprite-btn open-board" data-go="board" aria-label="Open the Case Board"><img src="assets/btn-casefiles.png" alt=""></button>
         </div>
       </div>
@@ -519,10 +543,10 @@ footer a{color:var(--teal)}
           <line x1="110" y1="108" x2="126" y2="124" stroke="#f6e6c8" stroke-width="8" stroke-linecap="round"/>
           <circle cx="94" cy="92" r="6" fill="#5fd3c4"/>
         </svg>
-        <div class="kicker lines">Investigation complete</div>
-        <h2 class="display">All cases closed!</h2>
+        <div class="kicker lines" id="finKicker">Investigation complete</div>
+        <h2 class="display" id="finTitle">All cases closed!</h2>
         <div class="rank" id="rank"></div>
-        <p class="closing">These machines were left behind, but never forgotten. Every one of them taught us something new and helped the next mission go further. Maybe one day, you will build the next one.</p>
+        <p class="closing" id="finText">These machines were left behind, but never forgotten. Every one of them taught us something new and helped the next mission go further. Maybe one day, you will build the next one.</p>
         <div class="actions">
           <button class="btn" id="restart">Play Again</button>
           <button class="btn ghost" data-go="board">Review the Cases</button>
@@ -676,6 +700,15 @@ const LAYOUT = {
   reflector:   {cx:836, cy:706, w:222, h:218, r:0.4,  sticky:["b","abandoned??"]}
 };
 
+/* ---------- DEMO VERSION ----------
+   demo.html is this same file with data-demo="1" on <html>.
+   Only the cases in DEMO_OPEN can be played; the rest show as locked. */
+const DEMO = document.documentElement.dataset.demo === "1";
+const DEMO_OPEN = ["spirit","reflector"];
+const isLocked = id => DEMO && !DEMO_OPEN.includes(id);
+const PLAYABLE = CASES.filter(c=>!isLocked(c.id));
+if(DEMO) document.documentElement.classList.add("is-demo");
+
 /* ---------- SOUND (made in code, no audio files) ---------- */
 const SFX = (()=>{
   let ctx=null, muted=false;
@@ -769,29 +802,43 @@ show("title");
 
 /* ---------- BOARD ---------- */
 function renderBoard(){
-  const n = Object.keys(state.solved).length, done = n===CASES.length;
+  const n = PLAYABLE.filter(c=>state.solved[c.id]).length, total = PLAYABLE.length, done = n===total;
+  const countLine = `${n} of ${total} solved`;
   $("#memo").innerHTML = `
-    <div class="from">Mission Control<span class="slashes">///</span></div>
+    <div class="from">Mission Control${DEMO?" · Demo":""}<span class="slashes">///</span></div>
     <h3 class="display">Machines we left behind</h3>
-    <p>3 on Mars. 2 on the Moon.<br>Find out what happened to each one.</p>
-    ${done ? `<button class="btn" id="toFinale">Close the Investigation</button>` : `<div class="count">${n} of ${CASES.length} solved</div>`}`;
+    ${DEMO ? `<p>2 case files are open in this demo.<br>3 more unlock in the full game.</p>`
+           : `<p>3 on Mars. 2 on the Moon.<br>Find out what happened to each one.</p>`}
+    ${done ? `<button class="btn" id="toFinale">Close the Investigation</button>` : `<div class="count" id="memoCount">${countLine}</div>`}`;
   $("#grid").innerHTML = CASES.map(c=>{
-    const L = LAYOUT[c.id], solved = !!state.solved[c.id];
+    const L = LAYOUT[c.id], solved = !!state.solved[c.id], locked = isLocked(c.id);
+    const label = c.tab+": "+c.name+". "+(locked ? "Locked in the demo. Unlocks in the full game." : c.hook+(solved?" Solved.":""));
     return `
-    <button class="bcard at ${solved?"solved":""}" data-case="${c.id}"
+    <button class="bcard at ${solved?"solved":""} ${locked?"locked":""}" data-case="${c.id}" ${locked?'aria-disabled="true"':""}
       style="--x:${L.cx-L.w/2};--y:${L.cy-L.h/2};--w:${L.w};--h:${L.h};--r:${L.r}deg"
-      aria-label="${esc(c.tab+": "+c.name+". "+c.hook+(solved?" Solved.":""))}">
-      <span class="win"><img class="ph" src="${ART[c.id].src}" alt=""><img class="cstamp" src="assets/stamp-closed.png" alt=""></span>
+      aria-label="${esc(label)}">
+      <span class="win"><img class="ph" src="${ART[c.id].src}" alt=""><img class="cstamp" src="assets/stamp-closed.png" alt="">
+        ${locked?`<img class="lock" src="assets/badge-locked.png" alt="">`:""}</span>
       <span class="cap"><span class="ctab">${esc(c.tab)}</span><span class="cname">${esc(c.name)}</span><span class="cwhere">${esc(c.where)}</span></span>
-      ${L.sticky?`<span class="sticky ${L.sticky[0]}">${esc(L.sticky[1])}</span>`:""}
+      ${L.sticky && !locked?`<span class="sticky ${L.sticky[0]}">${esc(L.sticky[1])}</span>`:""}
     </button>`}).join("");
-  $("#grid").querySelectorAll(".bcard").forEach(f=>f.addEventListener("click",()=>{ SFX.folder(); openCase(f.dataset.case); }));
-  $("#progress").textContent = `${n} of ${CASES.length} solved`;
+  $("#grid").querySelectorAll(".bcard").forEach(f=>f.addEventListener("click",()=>{
+    if(isLocked(f.dataset.case)){
+      SFX.nope();
+      const m = $("#memoCount");
+      if(m){ m.textContent = "That case unlocks in the full game!"; m.classList.remove("flash"); void m.offsetWidth; m.classList.add("flash");
+        clearTimeout(renderBoard._t); renderBoard._t = setTimeout(()=>{ m.textContent = countLine; m.classList.remove("flash"); }, 2600); }
+      return;
+    }
+    SFX.folder(); openCase(f.dataset.case);
+  }));
+  $("#progress").textContent = countLine;
   if(done) $("#toFinale").addEventListener("click", ()=>{ SFX.badge(); showFinale(); });
 }
 
 /* ---------- CASE FLOW ---------- */
 function openCase(id){
+  if(isLocked(id)) return;
   state.current = CASES.find(c=>c.id===id);
   state.step = 0; state.opened = new Set(); state.guessed = false; state.left = new Set();
   show("case"); renderCase();
@@ -952,6 +999,14 @@ function renderLander(){
 
 /* ---------- FINALE ---------- */
 function showFinale(){
+  if(DEMO){
+    const right = state.correct.spirit ? 1 : 0;
+    $("#finKicker").textContent = "Demo complete";
+    $("#finTitle").textContent = "Demo cases closed!";
+    $("#rank").innerHTML = `${right ? "Rank: Rising Space Sleuth" : "Rank: Junior Space Sleuth"}<small>${right} of 1 mystery cracked on the first try</small>`;
+    $("#finText").textContent = "You cracked 2 of the 5 case files. The full game has 3 more: the Opportunity rover's last message, the Ingenuity helicopter's final flight, and the Pack the Lander challenge. Coming soon!";
+    show("finale"); return;
+  }
   const guessCases = ["spirit","opportunity","ingenuity"];
   const right = guessCases.filter(id=>state.correct[id]).length;
   const rank = right===3 ? "Rank: Chief Space Sleuth" : right===2 ? "Rank: Senior Space Sleuth" : "Rank: Junior Space Sleuth";

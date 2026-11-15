@@ -1,0 +1,1021 @@
+<!doctype html>
+<html lang="en" data-demo="1">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Space Sleuths (Demo)</title>
+<meta name="description" content="A detective game where kids uncover the stories and science behind the machines NASA left on the Moon and Mars.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Montserrat:ital,wght@1,800;1,900&family=Oswald:wght@600&family=Space+Mono:wght@400;700&family=Special+Elite&display=swap" rel="stylesheet">
+<link rel="preload" as="image" href="assets/bg-title.jpg">
+<style>
+:root{
+  --night:#070b14;
+  --panel:#0f1820;
+  --panel-a:rgba(11,17,27,.9);
+  --copper:#d08a4a;
+  --copper-dim:#8a5a30;
+  --teal:#5fd3c4;
+  --cream:#f6e6c8;
+  --paper:#ecdcb8;
+  --ink:#2b241b;
+  --ink-soft:#5a4d3b;
+  --red:#ff5a4e;
+  --stamp:#c0392b;
+  --amber:#f2b84b;
+  --ok:#47c27c;
+  --u:1px;               /* 1 art pixel. Phones: 1px. Big screens: scales with the artwork. */
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--night);
+  color:var(--cream);
+  font-family:"Atkinson Hyperlegible",system-ui,sans-serif;
+  font-size:17px;line-height:1.45;
+  min-height:100vh;
+}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+img{max-width:100%}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.mono{font-family:"Space Mono",monospace}
+.display{font-family:"Montserrat",system-ui,sans-serif;font-style:italic;font-weight:900;letter-spacing:-.01em}
+
+/* ---------- SCREENS + STAGE ---------- */
+.screen{display:none}
+.screen.active{display:block;animation:fade .45s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+
+/* Phone / tablet (default): the art is a backdrop and content stacks. */
+.stage{
+  position:relative;min-height:100vh;padding:78px 16px 40px;overflow-x:clip;
+  background:var(--bg) center/cover no-repeat, var(--night);
+}
+.stage::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(7,11,20,.55),rgba(7,11,20,.86) 40%,rgba(7,11,20,.92))}
+.stage > *{position:relative;z-index:1;max-width:720px;margin-left:auto;margin-right:auto}
+.stage > .phone-hide{display:none}
+#title .stage{--bg:url("assets/bg-title.jpg")}
+#briefing .stage{--bg:url("assets/bg-briefing.jpg");background-position:20% center}
+#board .stage{--bg:url("assets/bg-board.jpg")}
+#case .stage{--bg:url("assets/bg-case.jpg")}
+#case .stage::before,#board .stage::before{background:linear-gradient(180deg,rgba(7,11,20,.82),rgba(7,11,20,.9) 40%,rgba(7,11,20,.94))}
+#finale .stage{--bg:url("assets/bg-title.jpg")}
+
+/* ---------- BUTTONS ---------- */
+.btn{
+  display:inline-flex;align-items:center;gap:.5em;
+  background:linear-gradient(180deg,#c05634,#8c3420);color:#fbe7cf;
+  border:2px solid #e3a361;border-radius:3px;
+  box-shadow:inset 0 0 0 2px rgba(60,20,10,.55),0 0 14px rgba(255,140,60,.28),0 3px 0 #4a1b10;
+  padding:.62em 1.25em;font-family:"Space Mono",monospace;font-weight:700;
+  font-size:calc(17 * var(--u));letter-spacing:.12em;text-transform:uppercase;line-height:1.1;
+  transition:transform .1s, filter .15s;
+}
+.btn:hover:not([disabled]){filter:brightness(1.12);transform:translateY(-1px)}
+.btn:active:not([disabled]){transform:translateY(2px)}
+.btn[disabled]{opacity:.45;cursor:not-allowed;filter:grayscale(.6)}
+.btn.ghost{background:rgba(11,17,27,.85);color:var(--cream);border-color:var(--copper-dim);box-shadow:none}
+.btn.ghost:hover{border-color:var(--copper)}
+.btn.small{font-size:calc(14 * var(--u));padding:.45em .9em}
+.btn .chev{font-size:1.2em;line-height:1}
+.sprite-btn{background:none;border:0;padding:0;display:inline-block;line-height:0;transition:transform .12s, filter .15s}
+.sprite-btn img{display:block;width:100%;height:auto}
+.sprite-btn:hover{filter:brightness(1.12) drop-shadow(0 0 12px rgba(255,150,70,.45));transform:translateY(-2px)}
+.sprite-btn:active{transform:translateY(2px)}
+
+#mute{position:fixed;top:12px;right:12px;left:auto;z-index:60;width:132px;max-width:none;margin:0}
+.mute.off img{filter:grayscale(1) brightness(.75)}
+
+/* HUD panel with chamfered corners + copper rim */
+.hud{position:relative;padding:22px 20px;--c:calc(26 * var(--u))}
+.hud::before,.hud::after{content:"";position:absolute;pointer-events:none;
+  clip-path:polygon(var(--c) 0,100% 0,100% calc(100% - var(--c)),calc(100% - var(--c)) 100%,0 100%,0 var(--c))}
+.hud::before{inset:0;background:linear-gradient(160deg,#f0b070,#8a4f24 40%,#d08a4a 70%,#6b3a19)}
+.hud::after{inset:2px;background:linear-gradient(180deg,rgba(13,21,33,.94),rgba(9,14,23,.95))}
+.hud > *{position:relative;z-index:1}
+
+/* ---------- TITLE ---------- */
+.title-block{text-align:center;display:flex;flex-direction:column;align-items:center;padding-top:6vh}
+.kicker{font-family:"Space Mono",monospace;color:var(--teal);text-transform:uppercase;
+  font-size:calc(17 * var(--u));letter-spacing:.32em;display:flex;align-items:center;gap:1em;justify-content:center}
+.kicker.lines::before,.kicker.lines::after{content:"";height:1px;width:calc(70 * var(--u));background:currentColor;opacity:.7}
+#title h1{font-size:clamp(46px,13vw,calc(96 * var(--u)));line-height:1.12;margin:.22em 0 .12em;color:var(--cream);text-transform:uppercase;
+  text-shadow:0 4px 0 rgba(0,0,0,.35),0 0 30px rgba(0,0,0,.5)}
+#title h1 .red{color:var(--red)}
+#title .tag{font-family:"Space Mono",monospace;color:var(--amber);font-size:calc(25 * var(--u));margin:0 0 1.2em;font-weight:700}
+.brackets{position:relative;padding:.7em 2.2em;max-width:calc(640 * var(--u));margin:0 auto 1.6em;font-size:calc(20 * var(--u));color:#f1e8d6}
+.brackets::before,.brackets::after{content:"";position:absolute;top:0;bottom:0;width:calc(12 * var(--u));border:2px solid var(--amber);opacity:.85}
+.brackets::before{left:0;border-right:0}
+.brackets::after{right:0;border-left:0}
+.lede{text-shadow:0 1px 6px rgba(0,0,0,.8)}
+.start{width:min(360px,80vw)}
+.footbar{display:flex;align-items:center;gap:1em;font-family:"Space Mono",monospace;font-size:calc(14 * var(--u));letter-spacing:.25em;
+  color:var(--cream);text-transform:uppercase;margin-top:40px;justify-content:center;flex-wrap:wrap}
+.footbar .rule{flex:1;height:1px;background:linear-gradient(90deg,var(--copper),transparent);min-width:40px}
+.slashes{color:var(--red);font-style:italic;font-weight:900;letter-spacing:-.05em}
+
+/* ---------- BRIEFING ---------- */
+.brief{padding:28px 22px 26px}
+.brief .msg{display:flex;align-items:center;gap:.8em;font-family:"Space Mono",monospace;color:var(--teal);
+  text-transform:uppercase;letter-spacing:.3em;font-size:calc(17 * var(--u))}
+.brief .msg svg{width:calc(42 * var(--u));min-width:28px;height:auto}
+.brief .msg::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--teal),transparent);opacity:.6}
+.brief .body{border-left:3px solid var(--teal);padding-left:calc(30 * var(--u));margin-top:calc(18 * var(--u))}
+.brief h2{font-size:calc(62 * var(--u));line-height:1.05;margin:0 0 .35em;color:var(--cream)}
+.brief p{font-size:calc(24 * var(--u));margin:0 0 .75em;line-height:1.4}
+.brief .mission{background:var(--amber);color:#1b1309;font-family:"Montserrat",sans-serif;font-style:italic;font-weight:900;
+  padding:.05em .45em;display:inline-block;transform:skewX(-8deg);margin-right:.25em;text-transform:uppercase}
+.brief .open-board{width:calc(330 * var(--u));min-width:220px;margin-top:calc(10 * var(--u))}
+.secret{position:absolute;top:-14px;right:-6px;width:150px;transform:rotate(7deg);z-index:3;pointer-events:none;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5))}
+
+/* ---------- BOARD ---------- */
+.board-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.board-title{margin:0;font-size:calc(50 * var(--u));text-transform:uppercase;color:var(--cream);display:flex;align-items:center;gap:.35em}
+.progress{font-family:"Space Mono",monospace;color:var(--teal);font-size:calc(19 * var(--u));font-weight:700;letter-spacing:.06em}
+.memo{background:linear-gradient(170deg,#f3dfbb,#e2c596);color:var(--ink);padding:18px 16px;text-align:center;
+  box-shadow:0 10px 24px rgba(0,0,0,.45);border-radius:2px;margin-bottom:26px}
+.memo .from{font-family:"Space Mono",monospace;font-size:calc(14 * var(--u));letter-spacing:.25em;color:var(--ink-soft);text-transform:uppercase}
+.memo .from .slashes{font-family:"Montserrat";margin-left:.5em}
+.memo h3{font-size:calc(36 * var(--u));line-height:1.02;margin:.25em 0 .3em;text-transform:uppercase;color:#1d1810}
+.memo p{margin:0;font-size:calc(18 * var(--u));line-height:1.35}
+.memo .count{font-family:"Special Elite",monospace;font-size:calc(21 * var(--u));margin-top:.45em;color:var(--stamp)}
+.memo .btn{margin-top:.6em}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:28px 16px}
+.bcard{position:relative;background:none;border:0;padding:0;text-align:left;display:block;width:100%;
+  transform:rotate(calc(var(--r) * .5));transition:transform .15s}
+.bcard .win{position:relative;display:block;aspect-ratio:368/384}
+.bcard .win img.ph{position:absolute;left:10%;top:7.6%;width:80.5%;height:70%;object-fit:cover;filter:saturate(.95) contrast(1.03);transition:filter .2s}
+.bcard .win::after{content:"";position:absolute;inset:0;background:url("assets/polaroid.png") 0 0/100% 100% no-repeat;pointer-events:none}
+.bcard .cstamp{position:absolute;left:50%;top:40%;width:78%;transform:translate(-50%,-50%) rotate(-12deg) scale(1.4);opacity:0;z-index:3;pointer-events:none;
+  transition:transform .3s cubic-bezier(.2,1.6,.4,1),opacity .2s;filter:contrast(1.35) saturate(1.5) brightness(1.15) drop-shadow(0 0 3px rgba(255,240,220,.7))}
+.bcard.solved .cstamp{opacity:1;transform:translate(-50%,-50%) rotate(-12deg) scale(1);width:92%}
+.bcard.solved img.ph{filter:grayscale(.7) brightness(1.05) contrast(.85)}
+.cap{display:block;position:relative;margin:-14px 6px 0;padding:6px 10px 8px;color:var(--ink);
+  background:linear-gradient(175deg,#f4e4c3,#dcc394);box-shadow:0 6px 12px rgba(0,0,0,.45);z-index:2;
+  clip-path:polygon(0 3px,4% 0,30% 2px,58% 0,86% 3px,100% 0,100% 100%,0 100%)}
+.cap .ctab{display:block;font-family:"Space Mono",monospace;font-weight:700;font-size:calc(12 * var(--u));letter-spacing:.15em;color:var(--stamp);line-height:1.5}
+.cap .cname{display:block;font-family:"Montserrat",sans-serif;font-style:italic;font-weight:900;font-size:calc(19 * var(--u));line-height:1.25;color:#1d1810}
+.cap .cwhere{display:block;font-family:"Space Mono",monospace;font-size:calc(12 * var(--u));color:var(--ink-soft);line-height:1.5}
+.bcard:hover,.bcard:focus-visible{transform:rotate(0deg) translateY(-3px)}
+.bcard:focus-visible{outline:none}
+.bcard:hover .win,.bcard:focus-visible .win{filter:drop-shadow(0 0 10px rgba(242,184,75,.85))}
+.sticky{position:absolute;font-family:"Special Elite",monospace;color:#3b3322;font-size:calc(14 * var(--u));padding:5px 8px;
+  box-shadow:0 4px 6px rgba(0,0,0,.35);z-index:4;line-height:1.15;right:-6px;top:-8px;transform:rotate(7deg)}
+.sticky.b{background:#9fd8e8}.sticky.p{background:#f4b6c2}
+/* Demo version */
+.demo-badge{display:none;font-family:"Space Mono",monospace;font-weight:700;font-size:calc(14 * var(--u));letter-spacing:.3em;text-transform:uppercase;
+  color:#0b1a1c;background:var(--teal);padding:.25em .9em;border-radius:2px;margin-bottom:.8em;box-shadow:0 0 16px rgba(95,211,196,.45)}
+.is-demo .demo-badge{display:inline-block}
+.demo-only{display:none}
+.is-demo .demo-only{display:block}
+.is-demo .full-only{display:none}
+.is-demo .title-block{transform:translateY(calc(-22 * var(--u)))}
+.bcard.locked{cursor:not-allowed}
+.bcard.locked img.ph{filter:grayscale(1) brightness(.45) blur(1px)}
+.bcard .lock{display:none;position:absolute;left:50%;top:40%;width:72%;transform:translate(-50%,-50%) rotate(-4deg);z-index:3;pointer-events:none;
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,.6))}
+.bcard.locked .lock{display:block}
+.bcard.locked .cap{filter:saturate(.4) brightness(.8)}
+.bcard.locked:hover,.bcard.locked:focus-visible{transform:rotate(calc(var(--r) * .5))}
+.memo .count.flash{animation:blink .5s 3}
+
+/* ---------- CASE FILE ---------- */
+.case-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.steps{display:flex;gap:4px}
+.step{font-family:"Space Mono",monospace;font-size:calc(12 * var(--u));letter-spacing:.12em;text-transform:uppercase;
+  color:rgba(246,230,200,.5);padding:.35em 1.2em .35em .7em;background:rgba(246,230,200,.06);
+  clip-path:polygon(0 0,86% 0,100% 50%,86% 100%,0 100%);display:flex;align-items:center;justify-content:center}
+.step.on{color:#1b1309;background:linear-gradient(180deg,#ffc867,#e08a3a);font-weight:700}
+.field{font-family:"Space Mono",monospace;color:var(--teal);font-size:calc(16 * var(--u));letter-spacing:.14em;text-transform:uppercase;display:flex;align-items:center}
+.ctitle{font-size:calc(38 * var(--u));line-height:1.15;margin:.15em 0 .3em;text-transform:uppercase;color:var(--cream);display:flex;align-items:center;
+  text-shadow:0 3px 0 rgba(0,0,0,.4)}
+.status{display:flex;align-items:center;justify-content:center;margin:0 0 14px}
+.status .plate{display:flex;align-items:center;gap:.6em;font-family:"Special Elite",monospace;font-size:calc(22 * var(--u));letter-spacing:.06em;
+  color:var(--amber);text-transform:uppercase;background:#0e151d;border:3px double rgba(242,184,75,.85);padding:.3em .8em;white-space:nowrap;
+  box-shadow:0 0 0 4px #0e151d,0 6px 14px rgba(0,0,0,.5)}
+.status .plate .dot{width:.55em;height:.55em;border-radius:50%;background:var(--amber);box-shadow:0 0 10px var(--amber);animation:blink 1.4s infinite}
+@keyframes blink{50%{opacity:.25}}
+.status .closed-img{display:none;width:220px;transform:rotate(-8deg)}
+.status.closed .plate{display:none}
+.status.closed .closed-img{display:block;animation:slam .45s cubic-bezier(.2,1.5,.4,1)}
+@keyframes slam{from{transform:rotate(-8deg) scale(2.2);opacity:0}to{transform:rotate(-8deg) scale(1);opacity:1}}
+.photo{position:relative;background:#222;box-shadow:0 10px 26px rgba(0,0,0,.5);margin:0 auto 6px;max-width:440px;transform:rotate(-2deg);border:10px solid #efe3c9}
+.photo img{display:block;width:100%;aspect-ratio:411/394;object-fit:cover}
+.photo figcaption{position:absolute;right:6px;bottom:6px;max-width:80%;text-align:right;font-size:10px;line-height:1.25;color:#f2e9d3;
+  background:rgba(13,19,38,.72);padding:2px 6px;border-radius:2px}
+.corner{display:none}
+.clip{display:none}
+.tagline{font-family:"Special Elite",monospace;font-size:calc(15 * var(--u));color:#e9d9b8;text-align:center;margin:0}
+#cTag2{margin-bottom:16px}
+.row{position:relative;margin-bottom:12px;background:var(--panel-a);border:1px solid var(--copper-dim);border-radius:3px}
+.rin{display:block;width:100%;background:none;border:0;text-align:left;padding:12px 14px 14px;color:var(--cream)}
+.rh{display:flex;align-items:center;gap:.6em;font-family:"Montserrat",sans-serif;font-style:italic;font-weight:900;
+  font-size:calc(18 * var(--u));letter-spacing:.12em;text-transform:uppercase;color:var(--cream);line-height:1.2}
+.rh::before{content:"";width:44px;height:22px;flex:0 0 auto;background:var(--icon) center/contain no-repeat}
+#r1{--icon:url("assets/icon-rover.png")}#r2{--icon:url("assets/icon-terrain.png")}#r3{--icon:url("assets/icon-scan.png")}
+.rh em{font-style:normal;font-family:"Space Mono",monospace;font-weight:400;letter-spacing:.06em;color:var(--teal);font-size:.82em}
+.rb{display:block;margin-top:6px;font-size:calc(18 * var(--u));line-height:1.36}
+.rb .sp{display:none}
+.rb p{margin:0 0 .4em}
+.hint{color:var(--amber);font-family:"Space Mono",monospace;font-size:.9em;display:inline-flex;align-items:center;gap:.4em}
+.hint svg{width:1.1em;height:1.1em}
+button.rin{transition:background .15s, box-shadow .15s}
+button.rin:hover:not([disabled]){background:rgba(242,184,75,.08);box-shadow:inset 0 0 0 2px rgba(242,184,75,.55)}
+button.rin.open{cursor:default}
+.rin.opt .rb{font-size:calc(20 * var(--u));font-weight:700}
+.rin.right{background:rgba(71,194,124,.16)!important;box-shadow:inset 0 0 0 2px var(--ok)!important}
+.rin.wrong{background:rgba(255,90,78,.14)!important;box-shadow:inset 0 0 0 2px var(--red)!important}
+.rin[disabled]{cursor:default}
+.rin.right .rh::after{content:"✓";color:var(--ok);margin-left:auto;font-style:normal}
+.rin.wrong .rh::after{content:"✗";color:var(--red);margin-left:auto;font-style:normal}
+.fun{position:relative;background:linear-gradient(90deg,rgba(70,40,12,.55),rgba(11,17,27,.9) 45%);border:1px solid var(--copper);border-radius:3px;padding:12px 14px 14px;margin-bottom:14px}
+.flabel{font-family:"Montserrat",sans-serif;font-style:italic;font-weight:900;color:var(--cream);font-size:calc(21 * var(--u));text-transform:uppercase;
+  display:flex;align-items:center;gap:.5em}
+.flabel::before{content:"";width:30px;height:34px;background:url("assets/icon-bulb.png") center/contain no-repeat}
+.fbody{display:flow-root;font-size:calc(18 * var(--u));line-height:1.36;margin-top:6px}
+.fbody .sp{display:none}
+.fbody p{margin:0}
+.fbody .act{float:right;margin:0 0 4px 12px;display:block}
+.feedback{font-weight:700}
+.feedback.good{color:var(--ok)}
+.feedback.bad{color:#ff8a7e}
+.note{font-size:.82em;color:#bfb29a}
+.sources{font-size:calc(14 * var(--u));color:#cfc3aa}
+.sources a{color:var(--teal)}
+.sources li{margin-bottom:.25em}
+.sources ul{margin:.2em 0 0;padding-left:1.1em}
+.back-row{display:flex;gap:10px;justify-content:flex-start;margin-top:4px}
+#cLogo{display:none}
+.strip,.moonstrip{display:none}
+/* Pack the Lander */
+.meter{background:#2a2219;border:1px solid var(--copper-dim);border-radius:3px;height:calc(22 * var(--u));min-height:16px;position:relative;overflow:hidden;margin:.15em 0 .25em}
+.meter .fill{height:100%;background:linear-gradient(90deg,#c05634,var(--red));transition:width .3s}
+.meter .fill.ok{background:linear-gradient(90deg,#2f8f5b,var(--ok))}
+.meter .limit{position:absolute;top:-2px;bottom:-2px;width:3px;background:var(--amber);box-shadow:0 0 6px var(--amber)}
+.meter-label{display:flex;justify-content:space-between;font-family:"Space Mono",monospace;font-size:.82em;color:#cfc3aa}
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.item{background:#f1e2c2;border:2px solid #5a4630;border-radius:3px;padding:.3em .6em;text-align:left;color:var(--ink);line-height:1.15}
+.item .nm{font-weight:700;display:block;font-size:calc(15 * var(--u))}
+.item .kg{font-size:calc(13 * var(--u));color:var(--ink-soft);font-family:"Space Mono",monospace}
+.item.left{background:#7d725f;border-style:dashed;opacity:.8}
+.item.left .nm{text-decoration:line-through}
+.item:hover{filter:brightness(1.07)}
+
+/* ---------- FINALE ---------- */
+.fin{text-align:center;padding:30px 22px}
+.badge{width:170px;margin:0 auto 6px;display:block}
+.fin h2{font-size:calc(52 * var(--u));margin:.1em 0;text-transform:uppercase;color:var(--cream)}
+.rank{color:var(--amber);font-size:calc(24 * var(--u));font-family:"Space Mono",monospace;font-weight:700}
+.rank small{display:block;font-size:.7em;color:#cfc3aa;font-weight:400}
+.closing{max-width:560px;margin:16px auto;color:#e7dcc4;font-size:calc(19 * var(--u))}
+.fin .actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+footer{text-align:center;font-size:13px;color:#8d8775;padding:14px 16px 22px;background:var(--night)}
+footer a{color:var(--teal)}
+
+@media (max-width:520px){
+  .cards{gap:24px 12px}
+  .cap .cname{font-size:16px}
+  .brief h2{font-size:38px}
+  .brief p{font-size:18px}
+  .board-title{font-size:34px}
+  .memo h3{font-size:26px}
+  .ctitle{font-size:30px}
+  .secret{width:120px}
+  .kicker{font-size:12px;letter-spacing:.2em}
+  .kicker.lines::before,.kicker.lines::after{width:24px}
+  #title .tag{font-size:17px}
+  .brackets{font-size:17px;padding:.6em 1.4em}
+  .footbar{font-size:11px;letter-spacing:.15em}
+}
+
+/* =====================================================================
+   BIG SCREENS: lay everything inside the painted frames of the artwork.
+   Coordinates below are pixels of the 1672 x 941 artwork.
+   ===================================================================== */
+@media (min-width:1200px) and (min-aspect-ratio:5/4){
+  .screen.active{display:flex;align-items:center;justify-content:center;min-height:100vh}
+  .stage{
+    width:min(100%, max(177.69vh, 1280px));aspect-ratio:1672/941;min-height:0;padding:0;
+    container-type:inline-size;background:var(--bg) 0 0/100% 100% no-repeat, var(--night);
+    --u:calc(100cqw / 1672);
+    box-shadow:0 0 60px rgba(0,0,0,.6);
+  }
+  #briefing .stage{background-position:0 0}
+  .stage::before{display:none}
+  #finale .stage::before{display:block;background:radial-gradient(ellipse at center,rgba(7,11,20,.55),rgba(7,11,20,.82))}
+  .stage > *{max-width:none;margin:0}
+  .stage > .phone-hide{display:block}
+  .stage .at{position:absolute;
+    left:calc(var(--x) * 100% / 1672);top:calc(var(--y) * 100% / 941);
+    width:calc(var(--w) * 100% / 1672);height:calc(var(--h) * 100% / 941)}
+  .stage .stage-hide{display:none}
+  .board-head,.cards{display:contents}
+
+  #mute{position:absolute;right:auto;
+    left:calc(var(--mx) * 100% / 1672);top:calc(var(--my) * 100% / 941);width:calc(var(--mw) * 100% / 1672)}
+  #title .mute{--mx:1462;--my:22;--mw:178}
+  #briefing .mute{--mx:1462;--my:32;--mw:170}
+  #board .mute{--mx:1180;--my:36;--mw:160}
+  #case .mute{--mx:1088;--my:871;--mw:126}
+  #finale .mute{--mx:1462;--my:22;--mw:178}
+
+  /* Title */
+  .title-block{padding:0;justify-content:flex-start}
+  .title-block h1{font-size:calc(96 * var(--u))!important;line-height:1!important}
+  .start{width:calc(400 * var(--u))}
+  .footbar{margin:0;justify-content:space-between;flex-wrap:nowrap;padding:0 calc(16 * var(--u))}
+  .footbar .rule{min-width:0}
+
+  /* Briefing */
+  .brief{padding:calc(44 * var(--u)) calc(56 * var(--u)) calc(30 * var(--u));--c:calc(34 * var(--u))}
+  .secret{width:calc(250 * var(--u));top:calc(-40 * var(--u));right:calc(-22 * var(--u))}
+
+  /* Board */
+  .board-title{display:flex;align-items:center;padding-left:calc(22 * var(--u));font-size:calc(46 * var(--u))}
+  .progress{display:flex;align-items:center;justify-content:flex-start;padding-left:calc(4 * var(--u));white-space:nowrap;font-size:calc(17 * var(--u));letter-spacing:0}
+  .memo{background:none;box-shadow:none;padding:0;margin:0;display:flex;flex-direction:column;justify-content:center;align-items:center}
+  .memo h3{font-size:calc(38 * var(--u))}
+  .bcard{transform:rotate(var(--r))}
+  .bcard:hover,.bcard:focus-visible{transform:rotate(var(--r))}
+  .bcard .win{position:absolute;left:6.6%;right:6.6%;top:6.4%;bottom:7.4%;aspect-ratio:auto}
+  .bcard .win::after{display:none}
+  .bcard .win img.ph{left:0;top:0;width:100%;height:100%;box-shadow:inset 0 0 20px rgba(0,0,0,.6)}
+  .bcard:hover .win,.bcard:focus-visible .win{filter:none;box-shadow:0 0 0 calc(3 * var(--u)) var(--amber),0 0 calc(26 * var(--u)) calc(6 * var(--u)) rgba(242,184,75,.65)}
+  .bcard.locked:hover,.bcard.locked:focus-visible{transform:rotate(var(--r))}
+  .bcard.locked:hover .win,.bcard.locked:focus-visible .win{box-shadow:0 0 0 calc(3 * var(--u)) rgba(255,90,78,.6)}
+  .bcard .cap{position:absolute;left:-2%;right:-2%;top:93%;margin:0;padding:calc(5 * var(--u)) calc(10 * var(--u)) calc(7 * var(--u))}
+  .bcard:hover .cap,.bcard:focus-visible .cap{transform:translateY(calc(-2 * var(--u)))}
+  .sticky{right:calc(-14 * var(--u));top:calc(-16 * var(--u))}
+
+  /* Case file */
+  #cLogo{display:block;background:none;border:0;padding:0;border-radius:6px}
+  #cLogo:hover{box-shadow:0 0 0 2px rgba(242,184,75,.5)}
+  .case-top{display:contents}
+  .steps{display:contents}
+  .step{position:absolute;top:calc(87 * 100% / 941);height:calc(30 * 100% / 941);width:calc(88 * 100% / 1672);padding:0 calc(10 * var(--u)) 0 0;background:transparent}
+  .step:nth-child(1){left:calc(436 * 100% / 1672)}
+  .step:nth-child(2){left:calc(551 * 100% / 1672)}
+  .step:nth-child(3){left:calc(665 * 100% / 1672)}
+  .step.on{background:linear-gradient(180deg,rgba(255,200,103,.92),rgba(224,138,58,.92))}
+  .field{padding-left:calc(6 * var(--u))}
+  .ctitle{margin:0;font-size:calc(39 * var(--u));line-height:1}
+  .status{margin:0;transform:rotate(-7deg)}
+  .status .plate{width:100%;height:100%;justify-content:center;padding:0}
+  .status.closed .plate{display:flex;animation:peel .55s ease-in forwards}
+  .status.closed .closed-img{display:none}
+  .status.done .plate{display:none}
+  @keyframes peel{to{transform:translate(calc(40 * var(--u)),calc(-70 * var(--u))) rotate(-28deg) scale(.6);opacity:0}}
+  .photo{margin:0;max-width:none;border:0;transform:rotate(-4.6deg);box-shadow:0 2px 6px rgba(0,0,0,.35)}
+  .photo img{width:100%;height:100%;aspect-ratio:auto}
+  .photo figcaption{font-size:calc(11 * var(--u));right:calc(8 * var(--u));bottom:calc(8 * var(--u))}
+  .corner{display:block;position:absolute;width:11%;height:11%;background:linear-gradient(135deg,#6a6e72,#2b2f33 60%,#4a4d50);z-index:2;
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,.6))}
+  .corner.tl{left:-1%;top:-1%;clip-path:polygon(0 0,100% 0,0 100%)}
+  .corner.tr{right:-1%;top:-1%;clip-path:polygon(0 0,100% 0,100% 100%)}
+  .corner.bl{left:-1%;bottom:-1%;clip-path:polygon(0 0,100% 100%,0 100%)}
+  .corner.br{right:-1%;bottom:-1%;clip-path:polygon(100% 0,100% 100%,0 100%)}
+  .clip{display:block;transform:rotate(-14deg);z-index:3;pointer-events:none;filter:drop-shadow(1px 2px 2px rgba(0,0,0,.5))}
+  .clip img{width:100%;height:100%;object-fit:contain}
+  .strip{display:flex;flex-direction:column;justify-content:center;padding:0 calc(10 * var(--u));
+    background:url("assets/bg-case.jpg") calc(-420 * var(--u)) calc(-300 * var(--u))/calc(1672 * var(--u)) calc(941 * var(--u)) no-repeat;
+    box-shadow:inset 0 0 0 calc(2 * var(--u)) rgba(70,58,44,.75)}
+  .strip::before{content:"";position:absolute;inset:0;background:rgba(214,186,130,.35);mix-blend-mode:multiply;pointer-events:none}
+  .strip.off{display:none}
+  .strip span{position:relative;font-family:"Oswald",sans-serif;font-weight:600;text-transform:uppercase;color:#3c3934;line-height:1.5;
+    font-size:calc(26 * var(--u));letter-spacing:.01em;opacity:.9}
+  .strip span.sm{font-size:calc(22 * var(--u))}
+  .strip i{position:relative;color:#b8332a;font-style:italic;font-weight:900;font-family:"Montserrat";font-size:calc(18 * var(--u));margin-top:calc(6 * var(--u));letter-spacing:-.05em}
+  .moonstrip{display:block;overflow:hidden}
+  .moonstrip.off{display:none}
+  .moonstrip img{width:100%;height:100%;object-fit:cover;filter:sepia(.5) saturate(.9) brightness(.92) contrast(1.05)}
+  .tagline{display:flex;align-items:flex-end;padding:0 0 calc(3 * var(--u)) calc(10 * var(--u));text-align:left;color:#2f261b;
+    font-size:calc(16 * var(--u));transform:rotate(-6.2deg);white-space:nowrap;overflow:hidden;margin:0;line-height:1}
+  #cTag2{margin:0}
+  .row{margin:0;background:none;border:0;border-radius:0}
+  .rin{position:absolute;inset:0;padding:0}
+  .rh{position:absolute;left:calc(150 * var(--u));top:calc(5 * var(--u));height:calc(26 * var(--u));max-width:calc(620 * var(--u));
+    padding:0 calc(14 * var(--u)) 0 calc(6 * var(--u));background:#111922;font-size:calc(19 * var(--u));white-space:nowrap}
+  .rh::before{display:none}
+  .rin.right .rh::after,.rin.wrong .rh::after{margin-left:.5em}
+  .rb{position:absolute;left:calc(8 * var(--u));right:calc(10 * var(--u));top:calc(38 * var(--u));bottom:calc(6 * var(--u));margin:0;overflow:auto;
+    scrollbar-width:thin;scrollbar-color:var(--copper-dim) transparent}
+  .rb .sp{display:block;float:left;width:calc(122 * var(--u));height:calc(26 * var(--u))}
+  #r3 .rb .sp{height:calc(30 * var(--u))}
+  button.rin:hover:not([disabled]){background:rgba(242,184,75,.06);box-shadow:inset 0 0 0 calc(2 * var(--u)) rgba(242,184,75,.5)}
+  .fun{background:none;border:0;padding:0;margin:0}
+  .flabel{position:absolute;left:calc(98 * var(--u));top:calc(5 * var(--u));height:calc(35 * var(--u));min-width:calc(170 * var(--u));
+    padding:0 calc(34 * var(--u)) 0 calc(4 * var(--u));
+    background:linear-gradient(90deg,#43260b,#583218 55%,#6a3d20);clip-path:polygon(0 0,100% 0,84% 100%,0 100%);
+    font-size:calc(21 * var(--u));white-space:nowrap;transition:opacity .3s;z-index:2}
+  .flabel::before{display:none}
+  .flabel.painted{opacity:0}
+  .fbody{position:absolute;left:calc(98 * var(--u));right:calc(14 * var(--u));top:calc(8 * var(--u));bottom:calc(6 * var(--u));margin:0;overflow:auto;
+    font-size:calc(16.5 * var(--u));line-height:1.32;scrollbar-width:thin;scrollbar-color:var(--copper-dim) transparent}
+  .fbody .sp{display:block;float:left;width:var(--lw,calc(176 * var(--u)));height:calc(32 * var(--u))}
+  .fbody .act{margin-top:calc(14 * var(--u))}
+  .fbody.below .act{margin-top:calc(4 * var(--u))}
+  .fbody.below p{padding-top:calc(4 * var(--u))}
+  .back-row{margin:0;justify-content:flex-end;align-items:center}
+  .back-row .btn{padding:0 1em;height:100%}
+  .rb.items-wrap{top:calc(68 * var(--u));overflow:visible}
+  .rb.items-wrap .item{line-height:1.28;font-size:calc(13 * var(--u));padding:calc(2 * var(--u)) calc(9 * var(--u))}
+  .rb.items-wrap .item .nm{font-size:calc(13.5 * var(--u))}
+  .rb.items-wrap .item .kg{font-size:calc(12 * var(--u))}
+  .rb.items-wrap .item .kg{display:block}
+  .rb.items-wrap .sp{display:none}
+  .items{grid-template-columns:repeat(4,1fr);gap:calc(7 * var(--u))}
+  .item{padding:calc(4 * var(--u)) calc(9 * var(--u));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .item .nm{font-size:calc(14 * var(--u))}
+  .item .kg{font-size:calc(12.5 * var(--u))}
+  .field{white-space:nowrap;font-size:calc(14.5 * var(--u));letter-spacing:.1em;overflow:hidden}
+
+  /* Finale */
+  .fin{padding:calc(40 * var(--u)) calc(50 * var(--u));--c:calc(34 * var(--u));display:flex;flex-direction:column;justify-content:center}
+  .badge{width:calc(170 * var(--u))}
+  .closing{max-width:calc(600 * var(--u))}
+  footer{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body data-screen="title">
+
+<button class="mute sprite-btn" id="mute" aria-pressed="false" aria-label="Sound on"><img src="assets/btn-sound.png" alt=""></button>
+
+<main>
+  <!-- TITLE -->
+  <section class="screen active" id="title">
+    <div class="stage">
+      <div class="title-block at" style="--x:440;--y:116;--w:850;--h:490">
+        <div class="demo-badge">Demo version</div>
+        <div class="kicker lines">Case files from the Moon and Mars</div>
+        <h1 class="display"><span>Space</span> <span class="red">Sleuths</span></h1>
+        <p class="tag">Some machines went silent. Some never came home.</p>
+        <p class="lede brackets">NASA has left machines all over the Moon and Mars. Open their case files, study the clues, and find out what happened to each one, and what they discovered.</p>
+        <button class="sprite-btn start" data-go="briefing" aria-label="Start Investigation"><img src="assets/btn-investigate.png" alt=""></button>
+      </div>
+      <div class="footbar at" style="--x:36;--y:890;--w:1600;--h:30" aria-hidden="true">
+        <span><span class="slashes">///</span>&nbsp; NASA Mission Archive</span><span class="rule"></span><span>Moon // Mars // Rovers // Landers &nbsp;<span class="slashes">///</span></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- BRIEFING -->
+  <section class="screen" id="briefing">
+    <div class="stage">
+      <div class="brief hud at" style="--x:505;--y:106;--w:1128;--h:630">
+        <img class="secret" src="assets/stamp-secret.png" alt="Top secret">
+        <div class="msg"><svg viewBox="0 0 42 30" aria-hidden="true"><rect x="1.5" y="1.5" width="39" height="27" rx="2" fill="#f2b84b" stroke="#7a4d12" stroke-width="2"/><path d="M2 3l19 14L40 3" fill="none" stroke="#7a4d12" stroke-width="2.4"/></svg>Message from Mission Control</div>
+        <div class="body">
+          <h2 class="display">Welcome, Detective.</h2>
+          <p>Since the 1960s, NASA has sent machines to explore the Moon and Mars. Many of them are still out there today.</p>
+          <p>Some went silent. Some were left behind on purpose. And one of them might surprise you.</p>
+          <p><span class="mission">Your mission:</span> open each case file, inspect every clue, and make your best guess about what happened. Then uncover the real story and the science each machine made possible.</p>
+          <p class="demo-only"><span class="mission">Demo:</span> 2 of the 5 case files are open. Good luck, Space Sleuth.</p>
+          <p class="full-only">Good luck, Space Sleuth.</p>
+          <button class="sprite-btn open-board" data-go="board" aria-label="Open the Case Board"><img src="assets/btn-casefiles.png" alt=""></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BOARD -->
+  <section class="screen" id="board">
+    <div class="stage">
+      <div class="board-head stage-contents">
+        <h2 class="board-title display at" style="--x:40;--y:28;--w:470;--h:80"><span class="slashes">///</span> Case Board</h2>
+        <div class="progress at" id="progress" aria-live="polite" style="--x:1460;--y:29;--w:166;--h:68">0 of 5 solved</div>
+      </div>
+      <div class="memo at" id="memo" style="--x:612;--y:252;--w:456;--h:256"></div>
+      <div class="cards" id="grid"></div>
+    </div>
+  </section>
+
+  <!-- CASE -->
+  <section class="screen" id="case">
+    <div class="stage">
+      <button class="at" id="cLogo" style="--x:132;--y:62;--w:236;--h:80" data-go="board" aria-label="Back to Case Board" title="Back to Case Board"></button>
+      <div class="case-top">
+        <button class="btn ghost small stage-hide" data-go="board"><span class="chev">‹</span> Case Board</button>
+        <div class="steps" id="steps" aria-hidden="true"></div>
+      </div>
+      <div class="field at" id="cField" style="--x:1012;--y:79;--w:394;--h:48"></div>
+      <h2 class="ctitle display at" id="cTitle" style="--x:814;--y:150;--w:420;--h:86"></h2>
+      <div class="status at" id="cStatus" style="--x:1236;--y:136;--w:312;--h:90" aria-live="polite">
+        <span class="plate"><span class="dot" aria-hidden="true"></span>Under investigation</span>
+        <img class="closed-img" src="assets/stamp-closed.png" alt="Case closed">
+      </div>
+      <div class="moonstrip at off" id="cMoon" style="--x:414;--y:652;--w:328;--h:160" aria-hidden="true"><img src="assets/moon-strip.jpg" alt=""></div>
+      <div class="strip at off" id="cStrip" style="--x:147;--y:323;--w:152;--h:151" aria-hidden="true"></div>
+      <figure class="photo at" id="cPhoto" style="--x:314;--y:233;--w:411;--h:394">
+        <img id="cImg" src="" alt="">
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <figcaption id="cCredit"></figcaption>
+      </figure>
+      <div class="clip at" style="--x:330;--y:170;--w:62;--h:100" aria-hidden="true"><img src="assets/paperclip.png" alt=""></div>
+      <p class="tagline at" id="cTag1" style="--x:110;--y:748;--w:272;--h:26"></p>
+      <p class="tagline at" id="cTag2" style="--x:112;--y:785;--w:272;--h:26"></p>
+      <div class="row at" id="r1" style="--x:812;--y:244;--w:784;--h:158"></div>
+      <div class="row at" id="r2" style="--x:812;--y:407;--w:784;--h:148"></div>
+      <div class="row at" id="r3" style="--x:812;--y:560;--w:784;--h:168"></div>
+      <div class="fun at" id="fun" style="--x:816;--y:752;--w:775;--h:104">
+        <div class="flabel" id="funLabel">Fun fact:</div>
+        <div class="fbody" id="funBody" aria-live="polite"></div>
+      </div>
+      <div class="back-row at" style="--x:1232;--y:876;--w:360;--h:29">
+        <button class="btn ghost small" id="cBack" data-go="board"><span class="chev">‹</span> Back to Case Board</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINALE -->
+  <section class="screen" id="finale">
+    <div class="stage">
+      <div class="fin hud at" style="--x:436;--y:160;--w:800;--h:600">
+        <svg class="badge" viewBox="0 0 200 200" role="img" aria-label="Space Sleuth badge">
+          <polygon points="100,8 122,40 160,30 156,70 192,90 160,112 170,150 130,148 112,186 100,154 88,186 70,148 30,150 40,112 8,90 44,70 40,30 78,40" fill="#f2b84b"/>
+          <circle cx="100" cy="98" r="52" fill="#18213f"/>
+          <circle cx="94" cy="92" r="22" fill="none" stroke="#f6e6c8" stroke-width="6"/>
+          <line x1="110" y1="108" x2="126" y2="124" stroke="#f6e6c8" stroke-width="8" stroke-linecap="round"/>
+          <circle cx="94" cy="92" r="6" fill="#5fd3c4"/>
+        </svg>
+        <div class="kicker lines" id="finKicker">Investigation complete</div>
+        <h2 class="display" id="finTitle">All cases closed!</h2>
+        <div class="rank" id="rank"></div>
+        <p class="closing" id="finText">These machines were left behind, but never forgotten. Every one of them taught us something new and helped the next mission go further. Maybe one day, you will build the next one.</p>
+        <div class="actions">
+          <button class="btn" id="restart">Play Again</button>
+          <button class="btn ghost" data-go="board">Review the Cases</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer>Made by Space Sleuths for the NASA Space Apps Challenge 2026. Facts from NASA and NASA JPL, linked in every case. Photos: NASA, NASA/JPL-Caltech.</footer>
+
+<script>
+/* ---------- CASE DATA (edit stories here) ---------- */
+const CASES = [
+  {
+    id:"spirit", tab:"CASE 01", name:"Spirit Rover", where:"Mars · Gusev Crater",
+    hook:"Last heard from in 2010. Why did it stop?",
+    mystery:"Spirit explored Mars for years. Then it stopped moving and went quiet. What happened?",
+    clues:[
+      {label:"Evidence 1: Photo log, May 2009", text:"Photos show Spirit's wheels sunk deep into soft, crumbly soil. Every drive attempt makes it dig in deeper."},
+      {label:"Evidence 2: Engineering note", text:"One of Spirit's front wheels stopped working years earlier, in 2006. Since then it has been dragging that wheel behind it."},
+      {label:"Evidence 3: Weather report", text:"Martian winter is coming. Spirit runs on solar panels, and it needs to tilt them toward the Sun to stay warm and powered."}
+    ],
+    options:[
+      {t:"A giant dust storm buried it completely", ok:false},
+      {t:"It got stuck in sand and could not get enough sunlight to survive the winter", ok:true},
+      {t:"It drove off the edge of a cliff", ok:false}
+    ],
+    story:"In 2009, Spirit broke through a crust into a hidden patch of soft sand and got stuck. Engineers on Earth tried for months to free it. Stuck in place, Spirit could not tilt its solar panels toward the Sun for the long Martian winter. Its last message reached Earth on 22 March 2010.",
+    found:"Here is the amazing part. Spirit's broken wheel, dragging through the ground, scraped up bright white soil. It turned out to be almost pure silica. On Earth, that kind of soil forms around hot springs and steam vents, places where tiny life often thrives. So Mars may once have had hot springs!",
+    fact:"Spirit was only expected to work for about 90 Mars days. It kept exploring for more than 6 years.",
+    sources:[
+      ["NASA JPL: Mars rover mission comes to an end, but science and legacy live on","https://www.jpl.nasa.gov/edu/resources/teachable-moment/mars-rover-mission-comes-to-an-end-but-science-legacy-live-on/"],
+      ["NASA JPL: Spirit rover completes mission on Mars","https://jpl.nasa.gov/news/nasas-spirit-rover-completes-mission-on-mars"]
+    ]
+  },
+  {
+    id:"opportunity", tab:"CASE 02", name:"Opportunity Rover", where:"Mars · Endeavour Crater",
+    hook:"It sent one final message in 2018. Then silence.",
+    mystery:"Opportunity was healthy and still exploring. Then, suddenly, it stopped answering. Why?",
+    clues:[
+      {label:"Evidence 1: Orbiter warning", text:"A spacecraft circling Mars spots a dust storm growing near Opportunity. Within days, it spreads across the whole planet."},
+      {label:"Evidence 2: Power log", text:"Opportunity runs on sunlight. Each day, its solar panels make less and less power as the sky gets darker."},
+      {label:"Evidence 3: Radio log", text:"Final message received on 10 June 2018. NASA sends more than 800 wake up calls over the next months. No reply."}
+    ],
+    options:[
+      {t:"It rolled into a deep crater", ok:false},
+      {t:"Its wheels froze solid", ok:false},
+      {t:"A huge dust storm blocked the Sun, so it ran out of power", ok:true}
+    ],
+    story:"In 2018, one of the biggest dust storms ever seen on Mars covered the entire planet and turned day into night. With almost no sunlight reaching its solar panels, Opportunity's power ran out and it fell silent. NASA declared the mission complete in February 2019.",
+    found:"Opportunity found strong evidence that liquid water once flowed on Mars. It discovered tiny round pebbles nicknamed \"blueberries\" made of a mineral that usually forms in water, and later found bright veins of gypsum in rocks, left behind by water flowing through cracks.",
+    fact:"Opportunity was built to last 90 days. It explored for almost 15 years and drove more than a marathon across Mars.",
+    sources:[
+      ["NASA JPL: Opportunity rover mission on Mars comes to end","https://www.jpl.nasa.gov/news/nasas-opportunity-rover-mission-on-mars-comes-to-end/"],
+      ["NASA JPL: Mars rover mission comes to an end, but science and legacy live on","https://www.jpl.nasa.gov/edu/resources/teachable-moment/mars-rover-mission-comes-to-an-end-but-science-legacy-live-on/"]
+    ]
+  },
+  {
+    id:"ingenuity", tab:"CASE 03", name:"Ingenuity Helicopter", where:"Mars · Jezero Crater",
+    hook:"It flew 72 times. Why is it grounded now?",
+    mystery:"Ingenuity is still standing upright on Mars and can still talk to Earth. So why will it never fly again?",
+    clues:[
+      {label:"Evidence 1: Flight log", text:"Flight 72, 18 January 2024. A short hop to check its location. Contact is lost just before touchdown."},
+      {label:"Evidence 2: Shadow photo", text:"The next day, Ingenuity takes a photo of its own shadow. One of the rotor blades looks shorter than the others."},
+      {label:"Evidence 3: Weather check", text:"No storms that day. The helicopter is still powered by its solar panel and battery."}
+    ],
+    options:[
+      {t:"A rotor blade was damaged during landing", ok:true},
+      {t:"It ran out of fuel", ok:false},
+      {t:"Martian wind blew it away", ok:false}
+    ],
+    story:"During its 72nd flight, Ingenuity had a rough landing. The shadow photo revealed that at least one of its rotor blades was damaged, so it could no longer fly. NASA ended its mission in January 2024, but the little helicopter still stands on Mars.",
+    found:"Ingenuity made the first powered, controlled flight on another planet in April 2021. Mars air is super thin, so many people doubted it could fly at all. It also scouted routes from the sky for the Perseverance rover, and its success led NASA to plan helicopters for future Mars missions.",
+    fact:"Ingenuity was only planned to make 5 flights in 30 days. It flew 72 times over almost 3 years, spending more than 2 hours in the Martian sky.",
+    sources:[
+      ["NASA JPL: After three years on Mars, NASA's Ingenuity helicopter mission ends","https://www.jpl.nasa.gov/news/after-three-years-on-mars-nasas-ingenuity-helicopter-mission-ends/"]
+    ]
+  },
+  {
+    id:"lander", tab:"CASE 04", name:"Pack the Lander", where:"The Moon · Apollo 11, 1969",
+    hook:"Why did astronauts leave their own gear on the Moon?", special:true,
+    mystery:"It is July 1969. Neil Armstrong and Buzz Aldrin are about to leave the Moon in their lander, Eagle. But Eagle is too heavy to lift off! You decide what stays behind."
+  },
+  {
+    id:"reflector", tab:"CASE 05", name:"The Mirror Panel", where:"The Moon · Apollo 11, 1969",
+    hook:"Left on the Moon in 1969. But was it ever abandoned?",
+    mystery:"Apollo 11 astronauts set up a flat panel covered in small mirrors, then flew home without it. Why did they abandon it?",
+    clues:[
+      {label:"Evidence 1: Equipment list", text:"The panel has no battery, no wires and no moving parts. Just 100 special mirrors pointed at Earth."},
+      {label:"Evidence 2: Observatory logbook", text:"Telescopes on Earth still fire laser beams at this exact spot on the Moon, many times a month."},
+      {label:"Evidence 3: Timing record", text:"Each laser flash comes back to Earth about 2.5 seconds after it is fired."}
+    ],
+    twist:true,
+    options:[
+      {t:"It broke in the freezing lunar night", ok:false},
+      {t:"It ran out of power", ok:false},
+      {t:"The astronauts forgot to pack it", ok:false}
+    ],
+    story:"This machine was never abandoned. It was left on purpose, and it is still working today, more than 50 years later. Scientists bounce lasers off its mirrors and time how long the light takes to come back. That tells them exactly how far away the Moon is. Apollo 14 and Apollo 15 left more mirror panels too.",
+    found:"Thanks to these mirrors, we know the Moon is slowly drifting away from Earth, about 3.8 cm every year. Scientists have also used them to test Einstein's ideas about gravity.",
+    fact:"3.8 cm a year is roughly as fast as your fingernails grow!",
+    sources:[
+      ["NASA JPL: Apollo 11 experiment continues to return valuable data","https://www.jpl.nasa.gov/news/apollo-11-experiment-continues-to-return-valuable-data/"]
+    ]
+  }
+];
+
+/* Pack the Lander data. Weights are simplified game numbers. */
+const LANDER = {
+  limit:30,
+  items:[
+    {id:"rocks", nm:"Moon rocks and soil", kg:22, must:"Wait! The Moon rocks are the whole reason you came. Keep them!"},
+    {id:"film",  nm:"Photo film", kg:1, must:"Without the film, nobody on Earth will ever see your Moon photos. Keep it!"},
+    {id:"pack1", nm:"Life support backpack 1", kg:12},
+    {id:"pack2", nm:"Life support backpack 2", kg:12},
+    {id:"tools", nm:"Digging tools", kg:5},
+    {id:"boots", nm:"Moon overshoes", kg:3},
+    {id:"trash", nm:"Empty food packs", kg:2}
+  ],
+  story:"Before lifting off, Neil Armstrong and Buzz Aldrin really did open the hatch and toss things out onto the Moon. They left their life support backpacks, the overshoes they wore on the surface, tools and other used gear. The more they threw out, the more Moon rocks they could carry home.",
+  found:"Apollo 11 brought back about 21.5 kg of Moon rocks and soil. Studying them helped scientists work out that the Moon is about 4.5 billion years old, and that it probably formed after a giant object smashed into the young Earth.",
+  fact:"NASA filmed the astronauts throwing out their backpacks. You can still watch the video today!",
+  sources:[
+    ["NASA video: Astronauts jettisoning backpacks on Apollo 11","https://svs.gsfc.nasa.gov/10467"],
+    ["NASA: Apollo's lunar leftovers (archived)","https://webarchive.library.unt.edu/eot2008/20090120064513/http://www.nasa.gov/missions/solarsystem/f_leftovers.html"]
+  ]
+};
+
+/* ---------- PHOTOS + MISSION FILE DETAILS ---------- */
+const ART = {
+  spirit:      {src:"assets/photo-spirit.jpg",      credit:"NASA/JPL-Caltech/Cornell · Spirit self-portrait"},
+  opportunity: {src:"assets/photo-opportunity.jpg", credit:"NASA/JPL-Caltech/Cornell/ASU · Opportunity self-portrait"},
+  ingenuity:   {src:"assets/photo-ingenuity.jpg",   credit:"NASA/JPL-Caltech/ASU/MSSS · PIA24547"},
+  lander:      {src:"assets/photo-lander.jpg",      credit:"NASA · Apollo 11 photo AS11-40-5927"},
+  reflector:   {src:"assets/photo-reflector.jpg",   credit:"Illustration based on NASA Apollo 11 photo"}
+};
+/* label: replaces the painted "MARS ROVER MISSION" note (null keeps the painting). */
+const FILE = {
+  spirit:      {moon:false, label:null, tag:["Launch: Jun 10, 2003","Last signal: Mar 22, 2010"]},
+  opportunity: {moon:false, label:null, tag:["Launch: Jul 7, 2003","Last signal: Jun 10, 2018"]},
+  ingenuity:   {moon:false, label:["Mars","Helicopter","Mission"], tag:["Launch: Jul 30, 2020","Last flight: Jan 18, 2024"]},
+  lander:      {moon:true,  label:["Apollo 11","Lunar","Module"], tag:["Launch: Jul 16, 1969","Moon liftoff: Jul 21, 1969"]},
+  reflector:   {moon:true,  label:["Apollo 11","Mirror","Panel"],  tag:["Placed: Jul 21, 1969","Status: unknown"], solvedTag:"Status: still working!"}
+};
+/* Where each case photo sits on the painted case board (artwork pixels). */
+const LAYOUT = {
+  spirit:      {cx:350, cy:311, w:206, h:210, r:4.6,  sticky:null},
+  opportunity: {cx:1325,cy:310, w:206, h:212, r:-4.6, sticky:null},
+  ingenuity:   {cx:360, cy:598, w:216, h:218, r:-3.7, sticky:null},
+  lander:      {cx:1313,cy:600, w:222, h:214, r:3.4,  sticky:["p","special case!"]},
+  reflector:   {cx:836, cy:706, w:222, h:218, r:0.4,  sticky:["b","abandoned??"]}
+};
+
+/* ---------- DEMO VERSION ----------
+   demo.html is this same file with data-demo="1" on <html>.
+   Only the cases in DEMO_OPEN can be played; the rest show as locked. */
+const DEMO = document.documentElement.dataset.demo === "1";
+const DEMO_OPEN = ["spirit","reflector"];
+const isLocked = id => DEMO && !DEMO_OPEN.includes(id);
+const PLAYABLE = CASES.filter(c=>!isLocked(c.id));
+if(DEMO) document.documentElement.classList.add("is-demo");
+
+/* ---------- SOUND (made in code, no audio files) ---------- */
+const SFX = (()=>{
+  let ctx=null, muted=false;
+  try{ muted = localStorage.getItem("ss_muted")==="1"; }catch(e){}
+  function ac(){ if(!ctx){ try{ ctx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(ctx&&ctx.state==="suspended") ctx.resume(); return ctx; }
+  function tone(freq,dur,type="sine",vol=.15,delay=0,slideTo){
+    const c=ac(); if(!c||muted) return;
+    const t=c.currentTime+delay, o=c.createOscillator(), g=c.createGain();
+    o.type=type; o.frequency.setValueAtTime(freq,t);
+    if(slideTo) o.frequency.exponentialRampToValueAtTime(slideTo,t+dur);
+    g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    o.connect(g).connect(c.destination); o.start(t); o.stop(t+dur+.02);
+  }
+  function noise(dur,vol=.2,freq=1200,q=1,delay=0,sweepTo){
+    const c=ac(); if(!c||muted) return;
+    const t=c.currentTime+delay, len=Math.floor(c.sampleRate*dur), buf=c.createBuffer(1,len,c.sampleRate), d=buf.getChannelData(0);
+    for(let i=0;i<len;i++) d[i]=Math.random()*2-1;
+    const src=c.createBufferSource(), f=c.createBiquadFilter(), g=c.createGain();
+    src.buffer=buf; f.type="bandpass"; f.frequency.setValueAtTime(freq,t); f.Q.value=q;
+    if(sweepTo) f.frequency.exponentialRampToValueAtTime(sweepTo,t+dur);
+    g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    src.connect(f).connect(g).connect(c.destination); src.start(t); src.stop(t+dur+.02);
+  }
+  return {
+    get muted(){return muted},
+    toggle(){ muted=!muted; try{localStorage.setItem("ss_muted",muted?"1":"0")}catch(e){} muted ? this.ambienceStop() : this.ambienceStart(); return muted; },
+    ambienceStart(){
+      const c=ac(); if(!c||muted||this._amb) return;
+      const master=c.createGain(); master.gain.setValueAtTime(0,c.currentTime); master.gain.linearRampToValueAtTime(.09,c.currentTime+4);
+      master.connect(c.destination);
+      const lp=c.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=420; lp.Q.value=4; lp.connect(master);
+      const lfo=c.createOscillator(), lfoAmt=c.createGain(); lfo.frequency.value=.05; lfoAmt.gain.value=220;
+      lfo.connect(lfoAmt).connect(lp.frequency); lfo.start();
+      const oscs=[55,55.4,82.5].map((f,i)=>{ const o=c.createOscillator(), g=c.createGain(); o.type=i===2?"triangle":"sawtooth"; o.frequency.value=f; g.gain.value=i===2?.25:.35; o.connect(g).connect(lp); o.start(); return o; });
+      const len=c.sampleRate*4, buf=c.createBuffer(1,len,c.sampleRate), d=buf.getChannelData(0); for(let i=0;i<len;i++) d[i]=Math.random()*2-1;
+      const ns=c.createBufferSource(); ns.buffer=buf; ns.loop=true;
+      const bp=c.createBiquadFilter(); bp.type="bandpass"; bp.frequency.value=900; bp.Q.value=.7;
+      const ng=c.createGain(); ng.gain.value=.12; ns.connect(bp).connect(ng).connect(master); ns.start();
+      const ping=()=>{ if(!this._amb) return;
+        const t=c.currentTime, o=c.createOscillator(), g=c.createGain(); o.type="sine";
+        o.frequency.value=[880,988,1175,1319][Math.floor(Math.random()*4)];
+        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.25,t+.02); g.gain.exponentialRampToValueAtTime(.0001,t+1.6);
+        o.connect(g).connect(master); o.start(t); o.stop(t+1.7);
+        this._ping=setTimeout(ping, 6000+Math.random()*9000); };
+      this._amb={master,stop:[lfo,ns,...oscs]}; this._ping=setTimeout(ping,4000);
+    },
+    ambienceStop(){
+      const c=ctx, a=this._amb; if(!a||!c) return; this._amb=null; clearTimeout(this._ping);
+      a.master.gain.cancelScheduledValues(c.currentTime); a.master.gain.setTargetAtTime(0,c.currentTime,.3);
+      setTimeout(()=>{ a.stop.forEach(n=>{try{n.stop()}catch(e){}}); a.master.disconnect(); },1500);
+    },
+    click(){ tone(900,.05,"square",.05); },
+    folder(){ noise(.35,.25,900,.8,0,3000); },
+    clue(){ noise(.04,.35,2500,2); noise(.04,.25,1800,2,.06); tone(1400,.03,"square",.03,.1); },
+    right(){ tone(660,.15,"triangle",.18); tone(880,.25,"triangle",.18,.12); tone(1320,.35,"triangle",.12,.24); },
+    wrong(){ tone(220,.25,"sawtooth",.07); tone(180,.3,"sawtooth",.07,.12); },
+    twist(){ tone(440,.2,"triangle",.12); tone(415,.2,"triangle",.12,.18); tone(392,.2,"triangle",.12,.36); tone(523,.5,"triangle",.14,.6); },
+    stamp(){ tone(120,.18,"sine",.4,0,50); noise(.12,.35,400,.7); },
+    drop(){ tone(500,.18,"triangle",.1,0,180); },
+    pack(){ tone(300,.12,"triangle",.1,0,650); },
+    nope(){ tone(160,.15,"square",.06); tone(160,.15,"square",.06,.18); },
+    liftoff(){ noise(2.2,.35,150,.6,0,1600); tone(80,2,"sawtooth",.06,0,300); },
+    badge(){ [523,659,784,1047].forEach((f,i)=>tone(f,.4,"triangle",.14,i*.12)); }
+  };
+})();
+const muteBtn = document.getElementById("mute");
+function paintMute(){ muteBtn.classList.toggle("off", SFX.muted); muteBtn.setAttribute("aria-label", SFX.muted ? "Sound off" : "Sound on"); muteBtn.setAttribute("aria-pressed", String(SFX.muted)); muteBtn.title = SFX.muted ? "Sound: off" : "Sound: on"; }
+paintMute();
+document.addEventListener("pointerdown", ()=>SFX.ambienceStart(), {once:true});
+muteBtn.addEventListener("click", e=>{ e.stopPropagation(); SFX.toggle(); paintMute(); SFX.click(); });
+
+/* ---------- STATE ---------- */
+const state = { solved:{}, correct:{}, current:null, step:0, opened:new Set(), guessed:false, left:new Set() };
+
+/* ---------- HELPERS ---------- */
+const $ = s => document.querySelector(s);
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function show(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active", s.id===id));
+  document.body.dataset.screen = id;
+  document.querySelector(`#${id} .stage`).appendChild(muteBtn);
+  window.scrollTo({top:0,behavior:"smooth"});
+  if(id==="board") renderBoard();
+}
+document.addEventListener("click", e=>{
+  const go = e.target.closest("[data-go]");
+  if(go){ SFX.click(); show(go.dataset.go); }
+});
+document.addEventListener("keydown", e=>{ if(e.key==="Escape" && document.body.dataset.screen==="case"){ SFX.click(); show("board"); } });
+show("title");
+
+/* ---------- BOARD ---------- */
+function renderBoard(){
+  const n = PLAYABLE.filter(c=>state.solved[c.id]).length, total = PLAYABLE.length, done = n===total;
+  const countLine = `${n} of ${total} solved`;
+  $("#memo").innerHTML = `
+    <div class="from">Mission Control${DEMO?" · Demo":""}<span class="slashes">///</span></div>
+    <h3 class="display">Machines we left behind</h3>
+    ${DEMO ? `<p>2 case files are open in this demo.<br>3 more unlock in the full game.</p>`
+           : `<p>3 on Mars. 2 on the Moon.<br>Find out what happened to each one.</p>`}
+    ${done ? `<button class="btn" id="toFinale">Close the Investigation</button>` : `<div class="count" id="memoCount">${countLine}</div>`}`;
+  $("#grid").innerHTML = CASES.map(c=>{
+    const L = LAYOUT[c.id], solved = !!state.solved[c.id], locked = isLocked(c.id);
+    const label = c.tab+": "+c.name+". "+(locked ? "Locked in the demo. Unlocks in the full game." : c.hook+(solved?" Solved.":""));
+    return `
+    <button class="bcard at ${solved?"solved":""} ${locked?"locked":""}" data-case="${c.id}" ${locked?'aria-disabled="true"':""}
+      style="--x:${L.cx-L.w/2};--y:${L.cy-L.h/2};--w:${L.w};--h:${L.h};--r:${L.r}deg"
+      aria-label="${esc(label)}">
+      <span class="win"><img class="ph" src="${ART[c.id].src}" alt=""><img class="cstamp" src="assets/stamp-closed.png" alt="">
+        ${locked?`<img class="lock" src="assets/badge-locked.png" alt="">`:""}</span>
+      <span class="cap"><span class="ctab">${esc(c.tab)}</span><span class="cname">${esc(c.name)}</span><span class="cwhere">${esc(c.where)}</span></span>
+      ${L.sticky && !locked?`<span class="sticky ${L.sticky[0]}">${esc(L.sticky[1])}</span>`:""}
+    </button>`}).join("");
+  $("#grid").querySelectorAll(".bcard").forEach(f=>f.addEventListener("click",()=>{
+    if(isLocked(f.dataset.case)){
+      SFX.nope();
+      const m = $("#memoCount");
+      if(m){ m.textContent = "That case unlocks in the full game!"; m.classList.remove("flash"); void m.offsetWidth; m.classList.add("flash");
+        clearTimeout(renderBoard._t); renderBoard._t = setTimeout(()=>{ m.textContent = countLine; m.classList.remove("flash"); }, 2600); }
+      return;
+    }
+    SFX.folder(); openCase(f.dataset.case);
+  }));
+  $("#progress").textContent = countLine;
+  if(done) $("#toFinale").addEventListener("click", ()=>{ SFX.badge(); showFinale(); });
+}
+
+/* ---------- CASE FLOW ---------- */
+function openCase(id){
+  if(isLocked(id)) return;
+  state.current = CASES.find(c=>c.id===id);
+  state.step = 0; state.opened = new Set(); state.guessed = false; state.left = new Set();
+  show("case"); renderCase();
+}
+function renderSteps(labels, lit){
+  $("#steps").innerHTML = labels.map((l,i)=>`<span class="step ${i<lit?"on":""}">${l}</span>`).join("");
+}
+function caseFrame(c){
+  const f = FILE[c.id], a = ART[c.id];
+  $("#cField").textContent = `${c.tab} / ${c.where.replace(/ · /g," / ")}`;
+  $("#cTitle").textContent = c.name;
+  const img = $("#cImg"); img.src = a.src; img.alt = "Photo of " + c.name;
+  $("#cCredit").textContent = a.credit;
+  $("#cMoon").classList.toggle("off", !f.moon);
+  const strip = $("#cStrip");
+  strip.classList.toggle("off", !f.label);
+  strip.innerHTML = f.label ? f.label.map(w=>`<span class="${w.length>9?"sm":""}">${esc(w)}</span>`).join("") + `<i>///</i>` : "";
+  $("#cTag1").textContent = f.tag[0];
+  $("#cTag2").textContent = (state.solved[c.id] && f.solvedTag) ? f.solvedTag : f.tag[1];
+}
+function setStatus(closed, animate){
+  const s = $("#cStatus");
+  s.classList.remove("closed","done");
+  if(closed) s.classList.add("closed");
+}
+function setFun(label, html, painted){
+  const l = $("#funLabel"); l.textContent = label; l.classList.toggle("painted", !!painted);
+  const b = $("#funBody"); b.classList.toggle("below", !painted);
+  b.innerHTML = `<span class="sp" aria-hidden="true"></span>${html}`;
+  fitFunLabel();
+}
+function fitFunLabel(){ const l = $("#funLabel"); if(l.offsetWidth) $("#funBody").style.setProperty("--lw", (l.offsetWidth + 8) + "px"); }
+window.addEventListener("resize", fitFunLabel);
+function rowHTML(head, body, o={}){
+  const t = o.button ? "button" : "div";
+  return `<${t} class="rin ${o.cls||""}" ${o.attrs||""}><span class="rh">${head}</span><span class="rb ${o.rbCls||""}"><span class="sp" aria-hidden="true"></span>${body}</span></${t}>`;
+}
+function setRow(i, html){ $("#r"+(i+1)).innerHTML = html; }
+function sourcesHTML(list){
+  return `<div class="sources"><ul>${list.map(([t,u])=>`<li><a href="${u}" target="_blank" rel="noopener">${esc(t)}</a></li>`).join("")}</ul></div>`;
+}
+const MAG = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M15 15l6 6" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>`;
+
+function renderCase(){
+  const c = state.current;
+  caseFrame(c);
+  if(c.special){ renderLander(); return; }
+  renderSteps(["Clues","Guess","Reveal"], state.step+1);
+  $("#cBack").classList.toggle("ghost", state.step<2);
+
+  if(state.step===0){
+    setStatus(false);
+    c.clues.forEach((cl,i)=>{
+      const open = state.opened.has(i);
+      const [lab, title] = cl.label.split(": ");
+      setRow(i, rowHTML(`${esc(lab)} <em>${esc(title||"")}</em>`,
+        open ? esc(cl.text) : `<span class="hint">${MAG} Tap to inspect</span>`,
+        {button:true, cls:open?"open":"", attrs:`data-i="${i}" aria-expanded="${open}"`}));
+    });
+    const all = state.opened.size===c.clues.length;
+    setFun("The mystery:", `<span class="act"><button class="btn" id="toGuess" ${all?"":"disabled"}>Make your guess <span class="chev">›</span></button>
+      <span class="note" id="clueNote" style="display:block;text-align:center">${all?"":"Inspect all the evidence first."}</span></span>
+      <p>${esc(c.mystery)}</p>`);
+    document.querySelectorAll("#case .rin[data-i]").forEach(b=>b.addEventListener("click",()=>{
+      const i = +b.dataset.i; if(state.opened.has(i)) return;
+      SFX.clue(); state.opened.add(i);
+      b.classList.add("open"); b.setAttribute("aria-expanded","true");
+      b.querySelector(".rb").innerHTML = `<span class="sp" aria-hidden="true"></span>${esc(c.clues[i].text)}`;
+      if(state.opened.size===c.clues.length){ $("#toGuess").disabled=false; $("#clueNote").textContent=""; }
+    }));
+    $("#toGuess").addEventListener("click",()=>{SFX.click();state.step=1;renderCase();});
+  }
+
+  else if(state.step===1){
+    setStatus(false);
+    c.options.forEach((o,i)=>setRow(i, rowHTML(`Theory ${"ABC"[i]}`, esc(o.t), {button:true, cls:"opt", attrs:`data-i="${i}"`})));
+    setFun("Your call:", `<button class="btn act" id="toReveal" style="display:none">See what really happened <span class="chev">›</span></button>
+      <p id="fb">${c.twist ? "Why was this machine abandoned? Pick a theory." : "What do you think happened? Pick a theory."}</p>`);
+    const opts = [...document.querySelectorAll("#case .rin.opt")];
+    opts.forEach(b=>b.addEventListener("click",()=>{
+      if(state.guessed) return; state.guessed = true;
+      const o = c.options[+b.dataset.i], fb = $("#fb");
+      opts.forEach((x,i)=>{ x.disabled=true; if(c.options[i].ok) x.classList.add("right"); });
+      if(c.twist){
+        b.classList.add("wrong"); SFX.twist();
+        fb.className="feedback bad"; fb.textContent="Hmm... something about this case does not add up. Look closer.";
+        state.correct[c.id] = true; // nobody can guess a twist, so no penalty
+      } else if(o.ok){
+        b.classList.add("right"); SFX.right(); fb.className="feedback good"; fb.textContent="Sharp detective work! You cracked it.";
+        state.correct[c.id] = true;
+      } else {
+        b.classList.add("wrong"); SFX.wrong(); fb.className="feedback bad"; fb.textContent="Not quite! The right answer is highlighted in green.";
+        state.correct[c.id] = false;
+      }
+      $("#toReveal").style.display="inline-flex"; fitFunLabel(); $("#toReveal").focus({preventScroll:true});
+    }));
+    $("#toReveal").addEventListener("click",()=>{SFX.stamp();state.step=2;renderCase();});
+  }
+
+  else {
+    const first = !state.solved[c.id];
+    state.solved[c.id] = true;
+    caseFrame(c);
+    setStatus(true, true);
+    setRow(0, rowHTML(c.twist ? "Plot twist!" : "What really happened", esc(c.story)));
+    setRow(1, rowHTML("What it discovered", esc(c.found)));
+    setRow(2, rowHTML("Case sources", sourcesHTML(c.sources)));
+    setFun("Fun fact:", `<p>${esc(c.fact)}</p>`, true);
+    $("#cBack").focus({preventScroll:true});
+  }
+}
+
+/* ---------- PACK THE LANDER ---------- */
+function landerWeight(){ return LANDER.items.filter(i=>!state.left.has(i.id)).reduce((s,i)=>s+i.kg,0); }
+function renderLander(){
+  const c = state.current;
+  renderSteps(["Pack","Lift off","Report"], state.step===0 ? 1 : 3);
+  $("#cBack").classList.toggle("ghost", state.step===0);
+  if(state.step===0){
+    setStatus(false);
+    const total = LANDER.items.reduce((s,i)=>s+i.kg,0);
+    const w = landerWeight(), pct = Math.min(100, w/total*100), limitPct = LANDER.limit/total*100;
+    const okNow = w<=LANDER.limit;
+    setRow(0, rowHTML("The problem", esc(c.mystery)));
+    setRow(1, rowHTML("Cargo weight", `
+      <span class="meter" role="img" aria-label="Cargo weight ${w} of ${LANDER.limit} kilograms" style="display:block">
+        <span class="fill ${okNow?"ok":""}" style="display:block;width:${pct}%"></span>
+        <span class="limit" style="left:${limitPct}%"></span>
+      </span>
+      <span class="meter-label"><span>Cargo: <b>${w} kg</b></span><span>Limit: ${LANDER.limit} kg</span></span>
+      <span class="feedback ${okNow?"good":"bad"}" id="lfb" aria-live="polite" style="display:block">${okNow?"Light enough! Eagle is ready to lift off.":"Too heavy! Eagle cannot lift off yet."}</span>`));
+    setRow(2, rowHTML("Tap items to leave them on the Moon",`<span class="items">${LANDER.items.map(i=>`
+        <button class="item ${state.left.has(i.id)?"left":""}" data-id="${i.id}" aria-pressed="${state.left.has(i.id)}">
+          <span class="nm">${esc(i.nm)}</span><span class="kg">${i.kg} kg${state.left.has(i.id)?", left behind":""}</span>
+        </button>`).join("")}</span>`, {rbCls:"items-wrap"}));
+    setFun("Lift off:", `<button class="btn act" id="liftoff" ${okNow?"":"disabled"}>Lift off! <span class="chev">›</span></button>
+      <p>Eagle can only carry <b>${LANDER.limit} kg</b> of cargo home. <span class="note">Weights are simplified to keep the maths easy.</span></p>`);
+    document.querySelectorAll("#case .item").forEach(b=>b.addEventListener("click",()=>{
+      const it = LANDER.items.find(i=>i.id===b.dataset.id);
+      if(!state.left.has(it.id) && it.must){
+        const fb = $("#lfb"); fb.className="feedback bad"; fb.textContent=it.must; SFX.nope(); return;
+      }
+      if(state.left.has(it.id)){ state.left.delete(it.id); SFX.pack(); } else { state.left.add(it.id); SFX.drop(); }
+      renderLander();
+      const again = document.querySelector(`#case .item[data-id="${it.id}"]`); if(again) again.focus({preventScroll:true});
+    }));
+    $("#liftoff").addEventListener("click",()=>{ SFX.liftoff(); setTimeout(()=>SFX.stamp(),1900); state.step=1; state.correct[c.id]=true; renderLander(); });
+  } else {
+    state.solved[c.id] = true;
+    setStatus(true, true);
+    const leftNames = LANDER.items.filter(i=>state.left.has(i.id)).map(i=>i.nm.toLowerCase());
+    setRow(0, rowHTML("What really happened", esc(LANDER.story)));
+    setRow(1, rowHTML("What it made possible", esc(LANDER.found)));
+    setRow(2, rowHTML("Mission log", `<p><b>Liftoff!</b> You left behind: ${esc(leftNames.join(", "))}.</p>${sourcesHTML(LANDER.sources)}`));
+    setFun("Fun fact:", `<p>${esc(LANDER.fact)}</p>`, true);
+  }
+}
+
+/* ---------- FINALE ---------- */
+function showFinale(){
+  if(DEMO){
+    const right = state.correct.spirit ? 1 : 0;
+    $("#finKicker").textContent = "Demo complete";
+    $("#finTitle").textContent = "Demo cases closed!";
+    $("#rank").innerHTML = `${right ? "Rank: Rising Space Sleuth" : "Rank: Junior Space Sleuth"}<small>${right} of 1 mystery cracked on the first try</small>`;
+    $("#finText").textContent = "You cracked 2 of the 5 case files. The full game has 3 more: the Opportunity rover's last message, the Ingenuity helicopter's final flight, and the Pack the Lander challenge. Coming soon!";
+    show("finale"); return;
+  }
+  const guessCases = ["spirit","opportunity","ingenuity"];
+  const right = guessCases.filter(id=>state.correct[id]).length;
+  const rank = right===3 ? "Rank: Chief Space Sleuth" : right===2 ? "Rank: Senior Space Sleuth" : "Rank: Junior Space Sleuth";
+  $("#rank").innerHTML = `${rank}<small>${right} of 3 mysteries cracked on the first try</small>`;
+  show("finale");
+}
+$("#restart").addEventListener("click",()=>{ SFX.click();
+  state.solved={}; state.correct={}; show("title");
+});
+</script>
+</body>
+</html>
